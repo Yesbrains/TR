@@ -8,24 +8,36 @@ import os
 
 
 def obtenció_de_coordenades(matriucolor,diccionari):
-    y, x = np.where(matriucolor > 0)
+    y, x = np.where(matriucolor )
     for (py, px) in zip(y, x):
-        dx = (px - cx)
-        dy = (py - cy)
+        dx = abs(px - cx)
+        dy = abs(py - cy)
         r = math.sqrt(dx ** 2 + dy ** 2)
-        theta = math.acos(dx / r) * 180 / math.pi
-        alpha = 180 - theta
-        if py < cy:
-            angle = theta
-        else:
-            angle = theta + 2 * alpha
-        r = r - rp
-        angle = round(angle,0)
-        r = round(r,0)
+
+        if py == cy and px > cx:
+            angle = 0
+        elif py == cy and px < cx:
+            angle = 180
+        elif py > cy and px == cx:
+            angle = 90
+        elif py < cy and px == cx:
+            angle = 270
+        elif py == cy and px > cx:
+            angle = 0
+        elif py > cy and px > cx:
+            angle = math.acos(dx / r) * 180 / pi
+        elif py > cy and px < cx:
+            angle = 180 - math.acos(dx / r) * 180 / pi
+        elif py < cy and px > cx:
+            angle = 360 - math.acos(dx / r) * 180 / pi
+        elif py < cy and px < cx:
+            angle = 180 + math.acos(dx / r) * 180 / pi
+        r = round (r - rp,10)
+        angle = round(angle,10)
         if r < 0:
             continue
         elif r <= ri - rp:
-            diccionari[(r, angle)] = matriucolor[py][px]
+            diccionari[(r, angle)] = matriucolor[py, px]
         else:
             continue
 
@@ -42,7 +54,7 @@ def calcul_centre_pupila(imatge):
     return(yt/cont, xt/cont)
 
 def calcul_radi_pupila(imatge, cpx, cpy):
-    y, x = np.where(imatge < 1)
+    y, x = np.where(imatge < 155)
     dyt = 0
     dxt = 0
     cont = 0
@@ -63,7 +75,7 @@ def calcul_radi_pupila(imatge, cpx, cpy):
 
 def calcul_valor_desviacio(imatge):
     img_np = np.array(imatge)
-    desviacio =np.std(img_np)
+    desviacio = np.std(img_np)
     return desviacio
 
 def binaritzacio(ds,umbral):
@@ -141,7 +153,7 @@ cv2.imshow("OriginalA", imgnew)
 print(ri, rp, (ri-rp))
 
 greydef = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
+cv2.imshow("Bl",greydef)
 obtenció_de_coordenades(greydef,normal_values)
 
 w = 362
@@ -150,8 +162,12 @@ Normal = np.zeros((h, w), np.uint8)
 
 for (r, a), v in normal_values.items():
    Normal[int(r)][int(a)] = v
+cv2.imshow("NOrmal",Normal)
+_,Mascara = cv2.threshold(Normal,10,255,type=cv2.THRESH_BINARY_INV)
+cv2.imshow("a",Mascara)
+A = cv2.inpaint(Normal,Mascara,5,cv2.INPAINT_TELEA)
 
-contrast = cv2.equalizeHist(Normal)
+contrast = cv2.equalizeHist(A)
 
 plt.imshow(contrast, cmap="gray")
 plt.title('Normalització')
